@@ -1,0 +1,121 @@
+import pandas as pd
+from neo4j import GraphDatabase
+
+
+class Neo4J_Loader():
+
+    def __init__(self, *args, **kwargs):
+        self.driver = GraphDatabase.driver(
+            'bolt://localhost:7687', auth=('neo4j', '180694'))
+        return super().__init__(*args, **kwargs)
+
+    def load_conferences(self):
+        print('Loading conferences to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (c:Conference) DETACH DELETE c
+            """)
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_proceedings.csv' AS row
+                WITH row
+                    WITH date({ year: toInteger(row[1]) }) AS startDate, row
+                        WITH date({ year: toInteger(row[1])}) AS endDate, startDate, row
+                            MERGE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
+                            RETURN c
+            """)
+            print('Conferences loaded.')
+
+    def load_journals(self):
+        print('Loading journals to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (j:Journal) DETACH DELETE j
+            """)
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_journals.csv' AS row
+                WITH row
+                    WITH date({ year: toInteger(row[1])}) AS date, row
+                        MERGE (j:Journal { title: row[0], date: date, volume: row[2] })
+                        RETURN j
+            """)
+            print('Journals loaded.')
+
+    def delete_papers(self):
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (p:Paper) DETACH DELETE p
+            """)
+
+    def load_conference_papers(self):
+        print('Loading conference papers to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_conference_papers.csv' AS row
+                WITH row
+                    MERGE (p:Paper { key: row[0], title: row[1] })
+                    WITH row, p
+                        MATCH (c:Conference { title: row[2], startDate: date({ year: toInteger(row[3])}) })
+                        MERGE (p)-[:PUBLISHED_IN]->(c)
+                        RETURN p
+            """)
+            print('Conference papers loaded.')
+
+    def load_journal_papers(self):
+        print('Loading journal papers to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_journal_papers.csv' AS row
+                WITH row
+                    MERGE (p:Paper { key: row[0], title: row[1] })
+                    WITH row, p
+                        MATCH (j:Journal { title: row[2], date: date({ year: toInteger(row[3]) }), volume: row[4] })
+                        MERGE (p)-[:PUBLISHED_IN]->(j)
+                        RETURN p
+            """)
+            print('Journal papers loaded.')
+
+    def delete_authors(self):
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (a:Author) DETACH DELETE a
+            """)
+
+    def load_conference_authors(self):
+        print('Loading authors from conference papers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_conference_authors.csv' AS row
+                WITH row
+                    MERGE (a:Author { name: row[1] })
+                    WITH row, a
+                        MATCH (p:Paper { key: row[0] })
+                        MERGE (a)-[:WRITE]->(p)
+                        RETURN a
+            """)
+            print('Conference authors loaded.')
+
+    def load_journal_authors(self):
+        print('Loading authors from journal papers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_journal_authors.csv' AS row
+                WITH row
+                    MERGE (a:Author { name: row[1] })
+                    WITH row, a
+                        MATCH (p:Paper { key: row[0] })
+                        MERGE (a)-[:WRITE]->(p)
+                        RETURN a
+            """)
+            print('Journal authors loaded.')
+
+    def generate_random_citations(self):
+        print('Generating random citations between papers...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (p1:Paper)
+                    WITH p1
+                    MATCH (p2:Paper) WHERE p1 <> p2 AND rand() < 0.025
+                        MERGE (p1)-[:CITE]->(p2)
+                        RETURN p1, p2
+            """)
+            print('Citations generated.')
