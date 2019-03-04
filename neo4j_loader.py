@@ -53,7 +53,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_conference_papers.csv' AS row
                 WITH row
-                    MERGE (p:Paper { key: row[0], title: row[1] })
+                    MERGE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
                         MATCH (c:Conference { title: row[2], startDate: date({ year: toInteger(row[3])}) })
                         MERGE (p)-[:PUBLISHED_IN]->(c)
@@ -67,7 +67,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_journal_papers.csv' AS row
                 WITH row
-                    MERGE (p:Paper { key: row[0], title: row[1] })
+                    MERGE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
                         MATCH (j:Journal { title: row[2], date: date({ year: toInteger(row[3]) }), volume: row[4] })
                         MERGE (p)-[:PUBLISHED_IN]->(j)

@@ -1,7 +1,12 @@
 import pandas as pd
 import re
+import lorem
 from gensim.utils import deaccent
 from nameparser import HumanName
+
+
+def generate_abstract(row):
+    return lorem.paragraph()
 
 
 def is_corresponding(author):
@@ -87,6 +92,9 @@ class DBLP_Loader():
         # Drop rows with any null value in defined columns
         df = df.dropna(subset=['key', 'title', 'booktitle', 'year'])
 
+        # Generate random abstract
+        df['abstract'] = df.apply(generate_abstract, axis=1)
+
         df.to_csv('datasets/minimized_conference_papers.csv',
                   sep=',', index=False, header=False)
         print('Conference papers extracted.')
@@ -108,6 +116,9 @@ class DBLP_Loader():
 
         # Drop rows with any null value in defined columns
         df = df.dropna(subset=['key', 'title', 'journal', 'year', 'volume'])
+
+        # Generate random abstract
+        df['abstract'] = df.apply(generate_abstract, axis=1)
 
         df.to_csv('datasets/minimized_journal_papers.csv',
                   sep=',', index=False, header=False)
