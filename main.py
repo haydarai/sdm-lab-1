@@ -1,5 +1,9 @@
+from dotenv import load_dotenv
+
 from neo4j_loader import Neo4J_Loader
 from dblp_loader import DBLP_Loader
+
+load_dotenv()
 
 if __name__ == "__main__":
 

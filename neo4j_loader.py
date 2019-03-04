@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from neo4j import GraphDatabase
 
@@ -6,7 +7,7 @@ class Neo4J_Loader():
 
     def __init__(self, *args, **kwargs):
         self.driver = GraphDatabase.driver(
-            'bolt://localhost:7687', auth=('neo4j', '180694'))
+            os.getenv('NEO4J_URL'), auth=(os.getenv('NEO4J_USER'), os.getenv('NEO4J_PASSWORD')))
         return super().__init__(*args, **kwargs)
 
     def load_conferences(self):
