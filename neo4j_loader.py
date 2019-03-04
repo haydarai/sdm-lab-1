@@ -80,25 +80,39 @@ class Neo4J_Loader():
                 MATCH (a:Author) DETACH DELETE a
             """)
 
-    def load_conference_authors(self):
-        print('Loading authors from conference papers...')
+    def load_corresponding_conference_authors(self):
+        print('Loading corresponding authors from conference papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_conference_authors.csv' AS row
+                LOAD CSV FROM 'file:///minimized_corresponding_conference_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
-                        MERGE (a)-[:WRITE]->(p)
+                        MERGE (a)-[:WRITE { is_corresponding: true }]->(p)
                         RETURN a
             """)
-            print('Conference authors loaded.')
+            print('Corresponding conference authors loaded.')
 
-    def load_journal_authors(self):
-        print('Loading authors from journal papers...')
+    def load_corresponding_journal_authors(self):
+        print('Loading corresponding authors from journal papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_journal_authors.csv' AS row
+                LOAD CSV FROM 'file:///minimized_corresponding_journal_authors.csv' AS row
+                WITH row
+                    MERGE (a:Author { name: row[1] })
+                    WITH row, a
+                        MATCH (p:Paper { key: row[0] })
+                        MERGE (a)-[:WRITE { is_corresponding: true }]->(p)
+                        RETURN a
+            """)
+            print('Corresponding journal authors loaded.')
+
+    def load_non_corresponding_conference_authors(self):
+        print('Loading non-corresponding authors from conference papers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_non_corresponding_conference_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a
@@ -106,7 +120,21 @@ class Neo4J_Loader():
                         MERGE (a)-[:WRITE]->(p)
                         RETURN a
             """)
-            print('Journal authors loaded.')
+            print('Non-corresponding conference authors loaded.')
+
+    def load_non_corresponding_journal_authors(self):
+        print('Loading non-corresponding authors from journal papers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_non_corresponding_journal_authors.csv' AS row
+                WITH row
+                    MERGE (a:Author { name: row[1] })
+                    WITH row, a
+                        MATCH (p:Paper { key: row[0] })
+                        MERGE (a)-[:WRITE]->(p)
+                        RETURN a
+            """)
+            print('Non-corresponding journal authors loaded.')
 
     def generate_random_citations(self):
         print('Generating random citations between papers...')

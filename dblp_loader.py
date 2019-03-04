@@ -1,12 +1,23 @@
 import pandas as pd
+import re
+from gensim.utils import deaccent
 from nameparser import HumanName
 
 
 def is_corresponding(author):
     last_name = author.last_name.split()
     if last_name:
-        return last_name[-1] in author.key
+        return deaccent(last_name[-1]) in deaccent(author.key)
     return False
+
+
+def extract_last_name(full_name):
+    full_name = re.sub(r'\d+', '', full_name)
+    return HumanName(full_name).last
+
+
+def remove_numbers_from_name(name):
+    return re.sub(r'\d+', '', name)
 
 
 class DBLP_Loader():
@@ -120,11 +131,27 @@ class DBLP_Loader():
         df = df.set_index(['key']).author.apply(pd.Series).stack(
         ).reset_index(name='author').drop('level_1', axis=1)
 
-        df['last_name'] = df['author'].apply(lambda name: HumanName(name).last)
+        df['author'] = df['author'].apply(remove_numbers_from_name)
+        df['last_name'] = df['author'].apply(extract_last_name)
         df['is_corresponding'] = df.apply(is_corresponding, axis=1)
 
-        df.to_csv('datasets/minimized_conference_authors.csv',
-                  sep=',', index=False, header=False)
+        df_corresponding = df[df['is_corresponding'] == True]
+        df_non_corresponding = df[df['is_corresponding'] == False]
+
+        # Extract useful columns
+        df_corresponding = df_corresponding[['key', 'author']]
+        df_non_corresponding = df_non_corresponding[['key', 'author']]
+
+        # Drop duplicates
+        df_corresponding = df_corresponding.drop_duplicates(
+            ['key'], keep='first')
+        df_non_corresponding = df_non_corresponding.drop_duplicates(
+            ['key', 'author'], keep='first')
+
+        df_corresponding.to_csv('datasets/minimized_corresponding_conference_authors.csv',
+                                sep=',', index=False, header=False)
+        df_non_corresponding.to_csv('datasets/minimized_non_corresponding_conference_authors.csv',
+                                    sep=',', index=False, header=False)
         print('Authors from conference papers extracted.')
 
     def extract_journal_authors(self):
@@ -145,8 +172,27 @@ class DBLP_Loader():
         df = df.set_index(['key']).author.apply(pd.Series).stack(
         ).reset_index(name='author').drop('level_1', axis=1)
 
-        df['last_name'] = df['author'].apply(lambda name: HumanName(name).last)
+        df['author'] = df['author'].apply(remove_numbers_from_name)
+        df['last_name'] = df['author'].apply(extract_last_name)
         df['is_corresponding'] = df.apply(is_corresponding, axis=1)
+
+        df_corresponding = df[df['is_corresponding'] == True]
+        df_non_corresponding = df[df['is_corresponding'] == False]
+
+        # Extract useful columns
+        df_corresponding = df_corresponding[['key', 'author']]
+        df_non_corresponding = df_non_corresponding[['key', 'author']]
+
+        # Drop duplicates
+        df_corresponding = df_corresponding.drop_duplicates(
+            ['key'], keep='first')
+        df_non_corresponding = df_non_corresponding.drop_duplicates(
+            ['key', 'author'], keep='first')
+
+        df_corresponding.to_csv('datasets/minimized_corresponding_journal_authors.csv',
+                                sep=',', index=False, header=False)
+        df_non_corresponding.to_csv('datasets/minimized_non_corresponding_journal_authors.csv',
+                                    sep=',', index=False, header=False)
 
         df.to_csv('datasets/minimized_journal_authors.csv',
                   sep=',', index=False, header=False)
