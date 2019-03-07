@@ -19,8 +19,8 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_proceedings.csv' AS row
                 WITH row
-                    WITH date({ year: toInteger(row[1]) }) AS startDate, row
-                        WITH date({ year: toInteger(row[1])}) AS endDate, startDate, row
+                    WITH row[1] + '-01-01' AS startDate, row
+                        WITH row[1] + '-01-02' AS endDate, startDate, row
                             MERGE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
                             RETURN c
             """)
@@ -35,7 +35,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_journals.csv' AS row
                 WITH row
-                    WITH date({ year: toInteger(row[1])}) AS date, row
+                    WITH row[1] + '-01-01' AS date, row
                         MERGE (j:Journal { title: row[0], date: date, volume: row[2] })
                         RETURN j
             """)
@@ -55,7 +55,7 @@ class Neo4J_Loader():
                 WITH row
                     MERGE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
-                        MATCH (c:Conference { title: row[2], startDate: date({ year: toInteger(row[3])}) })
+                        MATCH (c:Conference { title: row[2], startDate: row[3] + '-01-01' })
                         MERGE (p)-[:PUBLISHED_IN]->(c)
                         RETURN p
             """)
@@ -69,7 +69,7 @@ class Neo4J_Loader():
                 WITH row
                     MERGE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
-                        MATCH (j:Journal { title: row[2], date: date({ year: toInteger(row[3]) }), volume: row[4] })
+                        MATCH (j:Journal { title: row[2], date: row[3] + '-01-01' }), volume: row[4] })
                         MERGE (p)-[:PUBLISHED_IN]->(j)
                         RETURN p
             """)
