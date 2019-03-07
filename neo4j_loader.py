@@ -69,7 +69,7 @@ class Neo4J_Loader():
                 WITH row
                     MERGE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
-                        MATCH (j:Journal { title: row[2], date: row[3] + '-01-01' }), volume: row[4] })
+                        MATCH (j:Journal { title: row[2], date: toString(toInteger(row[3])) + '-01-01', volume: row[4] })
                         MERGE (p)-[:PUBLISHED_IN]->(j)
                         RETURN p
             """)
