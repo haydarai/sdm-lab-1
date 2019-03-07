@@ -3,6 +3,14 @@ import re
 import lorem
 from gensim.utils import deaccent
 from nameparser import HumanName
+import nltk
+import geograpy
+
+nltk.downloader.download('maxent_ne_chunker')
+nltk.downloader.download('words')
+nltk.downloader.download('treebank')
+nltk.downloader.download('maxent_treebank_pos_tagger')
+nltk.downloader.download('punkt')
 
 
 def generate_abstract(row):
@@ -24,11 +32,45 @@ def extract_last_name(full_name):
 def remove_numbers_from_name(name):
     return re.sub(r'\d+', '', name)
 
+def extract_venue(title):
+    places = geograpy.get_place_context(text=title).cities
+    if places:
+        return ','.join(places)
+    else:
+        return None
 
 class DBLP_Loader():
 
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
+
+    def extract_conference_venues(self):
+        print('Extracting conference venues...')
+        df = pd.read_csv('datasets/output_proceedings.csv',
+                         delimiter=';', nrows=10000)
+
+        # Drop columns with no value
+        df = df.dropna(axis=1, how='all')
+
+        # Extract useful columns
+        df = df[['booktitle', 'title']]
+
+        # Drop duplicates of conference title
+        df = df.drop_duplicates(['booktitle'], keep='first')
+
+        # Drop rows with any null value in defined columns
+        df = df.dropna(subset=['booktitle', 'title'])
+
+        df['venue'] = df['title'].apply(extract_venue)
+
+        # Drop rows with no venue information
+        df = df.dropna(subset=['venue'])
+
+        df = df[['booktitle', 'venue']]
+
+        df.to_csv('datasets/minimized_conference_venues.csv',
+                  sep=',', index=False, header=False)
+        print('Conference venues extracted.')
 
     def extract_conferences(self):
         print('Extracting conferences...')

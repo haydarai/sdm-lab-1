@@ -81,6 +81,18 @@ class Neo4J_Loader():
                 MATCH (a:Author) DETACH DELETE a
             """)
 
+    def load_conference_venues(self):
+        print('Loading conference venues...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///minimized_conference_venues.csv' AS row
+                WITH row
+                    MATCH (c:Conference { title: row[0] })
+                    SET c.venue = row[1]
+                    RETURN c
+            """)
+        print('Conference venues loaded.')
+
     def load_corresponding_conference_authors(self):
         print('Loading corresponding authors from conference papers...')
         with self.driver.session() as session:
