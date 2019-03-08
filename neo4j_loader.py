@@ -21,7 +21,7 @@ class Neo4J_Loader():
                 WITH row
                     WITH toString(toInteger(row[1])) + '-01-01' AS startDate, row
                         WITH toString(toInteger(row[1])) + '-01-02' AS endDate, startDate, row
-                            MERGE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
+                            CREATE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
                             RETURN c
             """)
             print('Conferences loaded.')
@@ -41,7 +41,7 @@ class Neo4J_Loader():
                 LOAD CSV FROM 'file:///minimized_journals.csv' AS row
                 WITH row
                     WITH toString(toInteger(row[1])) + '-01-01' AS date, row
-                        MERGE (j:Journal { title: row[0], date: date, volume: row[2] })
+                        CREATE (j:Journal { title: row[0], date: date, volume: row[2] })
                         RETURN j
             """)
             print('Journals loaded.')
@@ -64,10 +64,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_conference_papers.csv' AS row
                 WITH row
-                    MERGE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
+                    CREATE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
                         MATCH (c:Conference { title: row[2], startDate: toString(toInteger(row[3])) + '-01-01' })
-                        MERGE (p)-[:PUBLISHED_IN]->(c)
+                        CREATE (p)-[:PUBLISHED_IN]->(c)
                         RETURN p
             """)
             print('Conference papers loaded.')
@@ -78,10 +78,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_journal_papers.csv' AS row
                 WITH row
-                    MERGE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
+                    CREATE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
                         MATCH (j:Journal { title: row[2], date: toString(toInteger(row[3])) + '-01-01', volume: row[4] })
-                        MERGE (p)-[:PUBLISHED_IN]->(j)
+                        CREATE (p)-[:PUBLISHED_IN]->(j)
                         RETURN p
             """)
             print('Journal papers loaded.')
@@ -114,10 +114,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_corresponding_conference_authors.csv' AS row
                 WITH row
-                    MERGE (a:Author { name: row[1] })
+                    CREATE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
-                        MERGE (a)-[:WRITE { is_corresponding: true }]->(p)
+                        CREATE (a)-[:WRITE { is_corresponding: true }]->(p)
                         RETURN a
             """)
             print('Corresponding conference authors loaded.')
@@ -128,10 +128,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_corresponding_journal_authors.csv' AS row
                 WITH row
-                    MERGE (a:Author { name: row[1] })
+                    CREATE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
-                        MERGE (a)-[:WRITE { is_corresponding: true }]->(p)
+                        CREATE (a)-[:WRITE { is_corresponding: true }]->(p)
                         RETURN a
             """)
             print('Corresponding journal authors loaded.')
@@ -142,10 +142,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_non_corresponding_conference_authors.csv' AS row
                 WITH row
-                    MERGE (a:Author { name: row[1] })
+                    CREATE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
-                        MERGE (a)-[:WRITE]->(p)
+                        CREATE (a)-[:WRITE]->(p)
                         RETURN a
             """)
             print('Non-corresponding conference authors loaded.')
@@ -156,10 +156,10 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_non_corresponding_journal_authors.csv' AS row
                 WITH row
-                    MERGE (a:Author { name: row[1] })
+                    CREATE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
-                        MERGE (a)-[:WRITE]->(p)
+                        CREATE (a)-[:WRITE]->(p)
                         RETURN a
             """)
             print('Non-corresponding journal authors loaded.')
