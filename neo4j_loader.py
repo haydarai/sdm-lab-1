@@ -19,12 +19,17 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_proceedings.csv' AS row
                 WITH row
-                    WITH row[1] + '-01-01' AS startDate, row
-                        WITH row[1] + '-01-02' AS endDate, startDate, row
+                    WITH toString(toInteger(row[1])) + '-01-01' AS startDate, row
+                        WITH toString(toInteger(row[1])) + '-01-02' AS endDate, startDate, row
                             MERGE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
                             RETURN c
             """)
             print('Conferences loaded.')
+
+    def add_index_to_conferences(self):
+        with self.driver.session() as session:
+            session.run('CREATE INDEX ON :Conference(title)')
+            session.run('CREATE INDEX ON :Conference(startDate)')
 
     def load_journals(self):
         print('Loading journals to Neo4J...')
@@ -35,11 +40,17 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_journals.csv' AS row
                 WITH row
-                    WITH row[1] + '-01-01' AS date, row
+                    WITH toString(toInteger(row[1])) + '-01-01' AS date, row
                         MERGE (j:Journal { title: row[0], date: date, volume: row[2] })
                         RETURN j
             """)
             print('Journals loaded.')
+
+    def add_index_to_journals(self):
+        with self.driver.session() as session:
+            session.run('CREATE INDEX ON :Journal(title)')
+            session.run('CREATE INDEX ON :Journal(date)')
+            session.run('CREATE INDEX ON :Journal(volume)')
 
     def delete_papers(self):
         with self.driver.session() as session:
@@ -55,7 +66,7 @@ class Neo4J_Loader():
                 WITH row
                     MERGE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
-                        MATCH (c:Conference { title: row[2], startDate: row[3] + '-01-01' })
+                        MATCH (c:Conference { title: row[2], startDate: toString(toInteger(row[3])) + '-01-01' })
                         MERGE (p)-[:PUBLISHED_IN]->(c)
                         RETURN p
             """)
@@ -74,6 +85,10 @@ class Neo4J_Loader():
                         RETURN p
             """)
             print('Journal papers loaded.')
+
+    def add_index_to_papers(self):
+        with self.driver.session() as session:
+            session.run('CREATE INDEX ON :Paper(key)')
 
     def delete_authors(self):
         with self.driver.session() as session:
