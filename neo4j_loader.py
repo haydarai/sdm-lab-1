@@ -170,8 +170,8 @@ class Neo4J_Loader():
             session.run("""
                 MATCH (p1:Paper)
                     WITH p1
-                    MATCH (p2:Paper) WHERE p1 <> p2 AND rand() < 0.025
-                        MERGE (p1)-[:CITE]->(p2)
+                    MATCH (p2:Paper) WHERE p1 <> p2 AND rand() < 0.01
+                        MERGE (p1)-[:CITED_BY]->(p2)
                         RETURN p1, p2
             """)
             print('Citations generated.')
