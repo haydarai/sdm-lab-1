@@ -67,7 +67,7 @@ class Neo4J_Loader():
                     CREATE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
                         MATCH (c:Conference { title: row[2], startDate: toString(toInteger(row[3])) + '-01-01' })
-                        CREATE (p)-[:PUBLISHED_IN]->(c)
+                        CREATE (c)-[:HAS]->(p)
                         RETURN p
             """)
             print('Conference papers loaded.')
@@ -81,7 +81,7 @@ class Neo4J_Loader():
                     CREATE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
                         MATCH (j:Journal { title: row[2], date: toString(toInteger(row[3])) + '-01-01', volume: row[4] })
-                        CREATE (p)-[:PUBLISHED_IN]->(j)
+                        CREATE (j)-[:HAS]->(p)
                         RETURN p
             """)
             print('Journal papers loaded.')
