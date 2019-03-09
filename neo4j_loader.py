@@ -203,3 +203,17 @@ class Neo4J_Loader():
                         RETURN p1, p2
             """)
             print('Citations generated.')
+
+    def load_schools(self):
+        print('Loading schools...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (s:School) DETACH DELETE s
+            """)
+            session.run("""
+                LOAD CSV FROM 'file:///schools.csv' AS row
+                WITH row
+                    CREATE (s:School { name: row[0] })
+                    RETURN s
+            """)
+            print('Schools loaded.')
