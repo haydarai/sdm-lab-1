@@ -10,9 +10,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--parse', action='store_true')
     parser.add_argument('--load', action='store_true')
+    parser.add_argument('--evolve', action='store_true')
     args = parser.parse_args()
 
-    if args.parse:
+    if args.parse and not args.evolve:
         file_loader = DBLP_Loader()
         file_loader.extract_conferences()
         file_loader.extract_journals()
@@ -22,7 +23,7 @@ if __name__ == "__main__":
         file_loader.extract_conference_authors()
         file_loader.extract_journal_authors()
         print("Copy files generated in 'output' folder to '/var/lib/neo4j/import'")
-    elif args.load:
+    elif args.load and not args.evolve:
         database_loader = Neo4J_Loader()
         database_loader.load_conferences()
         database_loader.add_index_to_conferences()
@@ -40,3 +41,7 @@ if __name__ == "__main__":
         database_loader.load_non_corresponding_conference_authors()
         database_loader.load_non_corresponding_journal_authors()
         database_loader.generate_random_citations()
+    elif args.parse and args.evolve:
+        file_loader = DBLP_Loader()
+        file_loader.extract_schools()
+        print("Copy files generated in 'output' folder to '/var/lib/neo4j/import'")

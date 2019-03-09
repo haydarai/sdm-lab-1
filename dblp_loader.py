@@ -309,3 +309,14 @@ class DBLP_Loader():
         df.to_csv('output/journal_authors.csv',
                   sep=',', index=False, header=False)
         print('Authors from journal papers extracted.')
+
+    def extract_schools(self):
+        print('Extracting schools...')
+        df = pd.read_csv('input/output_school.csv', delimiter=';', nrows=10000,
+                         usecols={'school:string'},
+                         dtype={'school:string': str})
+        df = df.drop_duplicates(['school:string'])
+
+        df.to_csv('output/schools.csv',
+                  sep=',', index=False, header=False)
+        print('Schools extracted.')
