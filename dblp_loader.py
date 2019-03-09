@@ -5,12 +5,9 @@ from gensim.utils import deaccent
 from nameparser import HumanName
 import nltk
 import geograpy
-
-nltk.downloader.download('maxent_ne_chunker')
-nltk.downloader.download('words')
-nltk.downloader.download('treebank')
-nltk.downloader.download('maxent_treebank_pos_tagger')
-nltk.downloader.download('punkt')
+import spacy
+import random
+from collections import Counter
 
 
 def generate_abstract(row):
@@ -32,6 +29,7 @@ def extract_last_name(full_name):
 def remove_numbers_from_name(name):
     return re.sub(r'\d+', '', name)
 
+
 def extract_venue(title):
     places = geograpy.get_place_context(text=title).cities
     if places:
@@ -39,14 +37,37 @@ def extract_venue(title):
     else:
         return None
 
+
 class DBLP_Loader():
 
     def __init__(self, *args, **kwargs):
+        nltk.downloader.download('maxent_ne_chunker', quiet=True)
+        nltk.downloader.download('words', quiet=True)
+        nltk.downloader.download('treebank', quiet=True)
+        nltk.downloader.download('maxent_treebank_pos_tagger', quiet=True)
+        nltk.downloader.download('punkt', quiet=True)
+
+        self.nlp = spacy.load('en')
+        self.all_keywords = []
         return super().__init__(*args, **kwargs)
+
+    def extract_keyword_from_title(self, title):
+        keywords = []
+        for token in self.nlp(title):
+            if token.pos_ == "NOUN":
+                keywords.append(token.lower_)
+        self.all_keywords.extend(keywords)
+        return keywords
+
+    def randomize_keyword(self, keywords):
+        if not keywords:
+            return [random.choice(self.all_keywords)]
+        else:
+            return keywords
 
     def extract_conference_venues(self):
         print('Extracting conference venues...')
-        df = pd.read_csv('datasets/output_proceedings.csv',
+        df = pd.read_csv('input/output_proceedings.csv',
                          delimiter=';', nrows=10000)
 
         # Drop columns with no value
@@ -68,13 +89,13 @@ class DBLP_Loader():
 
         df = df[['booktitle', 'venue']]
 
-        df.to_csv('datasets/minimized_conference_venues.csv',
+        df.to_csv('output/conference_venues.csv',
                   sep=',', index=False, header=False)
         print('Conference venues extracted.')
 
     def extract_conferences(self):
         print('Extracting conferences...')
-        df = pd.read_csv('datasets/output_inproceedings.csv',
+        df = pd.read_csv('input/output_inproceedings.csv',
                          delimiter=';', nrows=10000, error_bad_lines=False)
 
         # Drop columns with no value
@@ -92,13 +113,13 @@ class DBLP_Loader():
         # Drop rows with any null value in defined columns
         df = df.dropna(subset=['booktitle', 'year'])
 
-        df.to_csv('datasets/minimized_proceedings.csv',
+        df.to_csv('output/proceedings.csv',
                   sep=',', index=False, header=False)
         print('Conferences extracted.')
 
     def extract_journals(self):
         print('Extracting journals...')
-        df = pd.read_csv('datasets/output_article.csv',
+        df = pd.read_csv('input/output_article.csv',
                          delimiter=';', nrows=10000, error_bad_lines=False)
         df = df.dropna(axis=1, how='all')
         df = df[['journal', 'year', 'volume', 'mdate']]
@@ -112,13 +133,13 @@ class DBLP_Loader():
         # Drop rows with any null value in defined columns
         df = df.dropna(subset=['journal', 'year', 'volume'])
 
-        df.to_csv('datasets/minimized_journals.csv',
+        df.to_csv('output/journals.csv',
                   sep=',', index=False, header=False)
         print('Journals extracted.')
 
     def extract_conference_papers(self):
         print('Extracting conference papers...')
-        df = pd.read_csv('datasets/output_inproceedings.csv',
+        df = pd.read_csv('input/output_inproceedings.csv',
                          delimiter=';', nrows=10000, error_bad_lines=False)
 
         # Drop columns with no value
@@ -137,13 +158,31 @@ class DBLP_Loader():
         # Generate random abstract
         df['abstract'] = df.apply(generate_abstract, axis=1)
 
-        df.to_csv('datasets/minimized_conference_papers.csv',
+        # Extract keywords
+        df['keywords'] = df['title'].apply(self.extract_keyword_from_title)
+
+        # Get top 20 keywords to fill in papers without any keyword
+        self.all_keywords = Counter(self.all_keywords)
+        self.all_keywords = self.all_keywords.most_common(20)
+        self.all_keywords = pd.DataFrame(self.all_keywords, columns=[
+            'keyword', 'occurence'])
+        self.all_keywords = self.all_keywords['keyword'].tolist()
+
+        # Randomize kwyword insertion to papers without any keyword
+        df['keywords'] = df['keywords'].apply(self.randomize_keyword)
+        df_keywords = df.set_index(['key']).keywords.apply(pd.Series).stack(
+        ).reset_index(name='keyword').drop('level_1', axis=1)
+        df = df.drop('keywords', axis=1)
+
+        df.to_csv('output/conference_papers.csv',
                   sep=',', index=False, header=False)
+        df_keywords.to_csv('output/conference_paper_keywords.csv',
+                           sep=',', index=False, header=False)
         print('Conference papers extracted.')
 
     def extract_journal_papers(self):
         print('Extracting journal papers...')
-        df = pd.read_csv('datasets/output_article.csv',
+        df = pd.read_csv('input/output_article.csv',
                          delimiter=';', nrows=10000, error_bad_lines=False)
 
         # Drop columns with no value
@@ -162,13 +201,32 @@ class DBLP_Loader():
         # Generate random abstract
         df['abstract'] = df.apply(generate_abstract, axis=1)
 
-        df.to_csv('datasets/minimized_journal_papers.csv',
+        # Extract keywords
+        df['keywords'] = df['title'].apply(self.extract_keyword_from_title)
+
+        # Get top 20 keywords to fill in papers without any keyword
+        self.all_keywords = Counter(self.all_keywords)
+        self.all_keywords = self.all_keywords.most_common(20)
+        self.all_keywords = pd.DataFrame(self.all_keywords, columns=[
+            'keyword', 'occurence'])
+        self.all_keywords = self.all_keywords['keyword'].tolist()
+
+        # Randomize kwyword insertion to papers without any keyword
+        df['keywords'] = df['keywords'].apply(self.randomize_keyword)
+        df_keywords = df.set_index(['key']).keywords.apply(pd.Series).stack(
+        ).reset_index(name='keyword').drop('level_1', axis=1)
+
+        df = df.drop('keywords', axis=1)
+
+        df.to_csv('output/journal_papers.csv',
                   sep=',', index=False, header=False)
+        df_keywords.to_csv('output/journal_paper_keywords.csv',
+                           sep=',', index=False, header=False)
         print('Journal papers extracted.')
 
     def extract_conference_authors(self):
         print('Extracting authors from conference papers...')
-        df = pd.read_csv('datasets/output_inproceedings.csv',
+        df = pd.read_csv('input/output_inproceedings.csv',
                          delimiter=';', nrows=10000,
                          error_bad_lines=False)
 
@@ -201,15 +259,15 @@ class DBLP_Loader():
         df_non_corresponding = df_non_corresponding.drop_duplicates(
             ['key', 'author'], keep='first')
 
-        df_corresponding.to_csv('datasets/minimized_corresponding_conference_authors.csv',
+        df_corresponding.to_csv('output/corresponding_conference_authors.csv',
                                 sep=',', index=False, header=False)
-        df_non_corresponding.to_csv('datasets/minimized_non_corresponding_conference_authors.csv',
+        df_non_corresponding.to_csv('output/non_corresponding_conference_authors.csv',
                                     sep=',', index=False, header=False)
         print('Authors from conference papers extracted.')
 
     def extract_journal_authors(self):
         print('Extracting authors from journal papers...')
-        df = pd.read_csv('datasets/output_article.csv',
+        df = pd.read_csv('input/output_article.csv',
                          delimiter=';', nrows=10000,
                          error_bad_lines=False)
 
@@ -242,11 +300,11 @@ class DBLP_Loader():
         df_non_corresponding = df_non_corresponding.drop_duplicates(
             ['key', 'author'], keep='first')
 
-        df_corresponding.to_csv('datasets/minimized_corresponding_journal_authors.csv',
+        df_corresponding.to_csv('output/corresponding_journal_authors.csv',
                                 sep=',', index=False, header=False)
-        df_non_corresponding.to_csv('datasets/minimized_non_corresponding_journal_authors.csv',
+        df_non_corresponding.to_csv('output/non_corresponding_journal_authors.csv',
                                     sep=',', index=False, header=False)
 
-        df.to_csv('datasets/minimized_journal_authors.csv',
+        df.to_csv('output/journal_authors.csv',
                   sep=',', index=False, header=False)
         print('Authors from journal papers extracted.')

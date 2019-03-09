@@ -17,7 +17,7 @@ class Neo4J_Loader():
                 MATCH (c:Conference) DETACH DELETE c
             """)
             session.run("""
-                LOAD CSV FROM 'file:///minimized_proceedings.csv' AS row
+                LOAD CSV FROM 'file:///proceedings.csv' AS row
                 WITH row
                     WITH toString(toInteger(row[1])) + '-01-01' AS startDate, row
                         WITH toString(toInteger(row[1])) + '-01-02' AS endDate, startDate, row
@@ -38,7 +38,7 @@ class Neo4J_Loader():
                 MATCH (j:Journal) DETACH DELETE j
             """)
             session.run("""
-                LOAD CSV FROM 'file:///minimized_journals.csv' AS row
+                LOAD CSV FROM 'file:///journals.csv' AS row
                 WITH row
                     WITH toString(toInteger(row[1])) + '-01-01' AS date, row
                         CREATE (j:Journal { title: row[0], date: date, volume: row[2] })
@@ -62,7 +62,7 @@ class Neo4J_Loader():
         print('Loading conference papers to Neo4J...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_conference_papers.csv' AS row
+                LOAD CSV FROM 'file:///conference_papers.csv' AS row
                 WITH row
                     CREATE (p:Paper { key: row[0], title: row[1], abstract: row[4] })
                     WITH row, p
@@ -72,11 +72,25 @@ class Neo4J_Loader():
             """)
             print('Conference papers loaded.')
 
+    def load_conference_paper_keywords(self):
+        print('Loading conference paper keywords to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///conference_paper_keywords.csv' AS row
+                WITH row
+                    MATCH (p:Paper { key: row[0] })
+                    WITH row, p
+                        MERGE (k:Keyword { keyword: row[1] })
+                        CREATE (p)-[:HAS]->(k)
+                        RETURN p
+            """)
+            print('Conference paper keywords loaded.')
+
     def load_journal_papers(self):
         print('Loading journal papers to Neo4J...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_journal_papers.csv' AS row
+                LOAD CSV FROM 'file:///journal_papers.csv' AS row
                 WITH row
                     CREATE (p:Paper { key: row[0], title: row[1], abstract: row[5] })
                     WITH row, p
@@ -85,6 +99,20 @@ class Neo4J_Loader():
                         RETURN p
             """)
             print('Journal papers loaded.')
+
+    def load_journal_paper_keywords(self):
+        print('Loading journal paper keywords to Neo4J...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///journal_paper_keywords.csv' AS row
+                WITH row
+                    MATCH (p:Paper { key: row[0] })
+                    WITH row, p
+                        MERGE (k:Keyword { keyword: row[1] })
+                        CREATE (p)-[:HAS]->(k)
+                        RETURN p
+            """)
+            print('Journal paper keywords loaded.')
 
     def add_index_to_papers(self):
         with self.driver.session() as session:
@@ -100,7 +128,7 @@ class Neo4J_Loader():
         print('Loading conference venues...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_conference_venues.csv' AS row
+                LOAD CSV FROM 'file:///conference_venues.csv' AS row
                 WITH row
                     MATCH (c:Conference { title: row[0] })
                     SET c.venue = row[1]
@@ -112,7 +140,7 @@ class Neo4J_Loader():
         print('Loading corresponding authors from conference papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_corresponding_conference_authors.csv' AS row
+                LOAD CSV FROM 'file:///corresponding_conference_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a
@@ -126,7 +154,7 @@ class Neo4J_Loader():
         print('Loading corresponding authors from journal papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_corresponding_journal_authors.csv' AS row
+                LOAD CSV FROM 'file:///corresponding_journal_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a
@@ -140,7 +168,7 @@ class Neo4J_Loader():
         print('Loading non-corresponding authors from conference papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_non_corresponding_conference_authors.csv' AS row
+                LOAD CSV FROM 'file:///non_corresponding_conference_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a
@@ -154,7 +182,7 @@ class Neo4J_Loader():
         print('Loading non-corresponding authors from journal papers...')
         with self.driver.session() as session:
             session.run("""
-                LOAD CSV FROM 'file:///minimized_non_corresponding_journal_authors.csv' AS row
+                LOAD CSV FROM 'file:///non_corresponding_journal_authors.csv' AS row
                 WITH row
                     MERGE (a:Author { name: row[1] })
                     WITH row, a

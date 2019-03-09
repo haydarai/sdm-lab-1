@@ -138,3 +138,5 @@ dmypy.json
 
 datasets/*
 explaratory.py
+input/*
+output/*
