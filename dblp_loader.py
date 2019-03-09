@@ -41,6 +41,7 @@ def extract_venue(title):
 class DBLP_Loader():
 
     def __init__(self, *args, **kwargs):
+        nltk.downloader.download('averaged_perceptron_tagger', quiet=True)
         nltk.downloader.download('maxent_ne_chunker', quiet=True)
         nltk.downloader.download('words', quiet=True)
         nltk.downloader.download('treebank', quiet=True)
