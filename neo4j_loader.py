@@ -114,7 +114,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_corresponding_conference_authors.csv' AS row
                 WITH row
-                    CREATE (a:Author { name: row[1] })
+                    MERGE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
                         CREATE (a)-[:WRITE { is_corresponding: true }]->(p)
@@ -128,7 +128,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_corresponding_journal_authors.csv' AS row
                 WITH row
-                    CREATE (a:Author { name: row[1] })
+                    MERGE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
                         CREATE (a)-[:WRITE { is_corresponding: true }]->(p)
@@ -142,7 +142,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_non_corresponding_conference_authors.csv' AS row
                 WITH row
-                    CREATE (a:Author { name: row[1] })
+                    MERGE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
                         CREATE (a)-[:WRITE]->(p)
@@ -156,7 +156,7 @@ class Neo4J_Loader():
             session.run("""
                 LOAD CSV FROM 'file:///minimized_non_corresponding_journal_authors.csv' AS row
                 WITH row
-                    CREATE (a:Author { name: row[1] })
+                    MERGE (a:Author { name: row[1] })
                     WITH row, a
                         MATCH (p:Paper { key: row[0] })
                         CREATE (a)-[:WRITE]->(p)
