@@ -52,3 +52,5 @@ if __name__ == "__main__":
         file_loader.generate_random_author_schools()
         database_loader.load_author_schools()
         database_loader.set_num_of_reviewers()
+        file_loader.generate_random_conference_reviewers()
+        file_loader.generate_random_journal_reviewers()

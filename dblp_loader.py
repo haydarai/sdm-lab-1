@@ -67,6 +67,12 @@ class DBLP_Loader():
         else:
             return keywords
 
+    def get_random_reviewers(self, authors, reviewers):
+        current_authors = set(authors)
+        filtered_reviewers = list(
+            filter(lambda x: x not in current_authors, reviewers))
+        return random.choices(filtered_reviewers, k=3)
+
     def extract_conference_venues(self):
         print('Extracting conference venues...')
         df = pd.read_csv('input/output_proceedings.csv',
@@ -371,3 +377,71 @@ class DBLP_Loader():
         df.to_csv('output/author_schools.csv',
                   sep=',', index=False, header=False)
         print("Author's affiliations generated.")
+
+    def generate_random_conference_reviewers(self):
+        print("Generating random conference's reviewers")
+        df = pd.read_csv('input/output_inproceedings.csv',
+                         delimiter=';', nrows=10000, error_bad_lines=False)
+
+        # Drop columns with no value
+        df = df.dropna(axis=1, how='all')
+
+        df = df.dropna(subset=['author'])
+
+        df_authors = df[['author', 'title']]
+        df_authors = df_authors.drop_duplicates()
+
+        df_authors['author'] = df_authors['author'].str.split('|')
+
+        df_authors_all = df_authors.set_index(['title']).author.apply(
+            pd.Series).stack().reset_index(name='author').drop('level_1', axis=1)
+        df_authors_all['author'] = df_authors_all['author'].apply(
+            remove_numbers_from_name)
+
+        authors = df_authors_all['author'].tolist()
+
+        df_authors['reviewer'] = df_authors['author'].apply(
+            lambda author: self.get_random_reviewers(author, authors))
+        df_authors = df_authors.set_index(['title']).reviewer.apply(
+            pd.Series).stack().reset_index(name='reviewer').drop('level_1', axis=1)
+        df_authors['reviewer'] = df_authors['reviewer'].apply(
+            remove_numbers_from_name)
+
+        df_authors.to_csv('output/conference_paper_reviewers.csv',
+                          sep=',', index=False, header=False)
+
+        print("Conference's reviewers generated.")
+
+    def generate_random_journal_reviewers(self):
+        print("Generating random journal's reviewers")
+        df = pd.read_csv('input/output_article.csv',
+                         delimiter=';', nrows=10000, error_bad_lines=False)
+
+        # Drop columns with no value
+        df = df.dropna(axis=1, how='all')
+
+        df = df.dropna(subset=['author'])
+
+        df_authors = df[['author', 'title']]
+        df_authors = df_authors.drop_duplicates()
+
+        df_authors['author'] = df_authors['author'].str.split('|')
+
+        df_authors_all = df_authors.set_index(['title']).author.apply(
+            pd.Series).stack().reset_index(name='author').drop('level_1', axis=1)
+        df_authors_all['author'] = df_authors_all['author'].apply(
+            remove_numbers_from_name)
+
+        authors = df_authors_all['author'].tolist()
+
+        df_authors['reviewer'] = df_authors['author'].apply(
+            lambda author: self.get_random_reviewers(author, authors))
+        df_authors = df_authors.set_index(['title']).reviewer.apply(
+            pd.Series).stack().reset_index(name='reviewer').drop('level_1', axis=1)
+        df_authors['reviewer'] = df_authors['reviewer'].apply(
+            remove_numbers_from_name)
+
+        df_authors.to_csv('output/journal_paper_reviewers.csv',
+                          sep=',', index=False, header=False)
+
+        print("Journal's reviewers generated.")
