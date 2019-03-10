@@ -46,5 +46,8 @@ if __name__ == "__main__":
         file_loader.extract_schools()
         print("Copy files generated in 'output' folder to '/var/lib/neo4j/import'")
     elif args.load and args.evolve:
+        file_loader = DBLP_Loader()
         database_loader = Neo4J_Loader()
         database_loader.load_schools()
+        file_loader.generate_random_author_schools()
+        database_loader.load_author_schools()

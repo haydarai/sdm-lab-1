@@ -50,6 +50,7 @@ class DBLP_Loader():
 
         self.nlp = spacy.load('en')
         self.all_keywords = []
+        self.schools = []
         return super().__init__(*args, **kwargs)
 
     def extract_keyword_from_title(self, title):
@@ -320,3 +321,53 @@ class DBLP_Loader():
         df.to_csv('output/schools.csv',
                   sep=',', index=False, header=False)
         print('Schools extracted.')
+
+    def generate_random_author_schools(self):
+        print("Generating random author's schools")
+
+        df_corresponding_conference_authors = pd.read_csv(
+            'output/corresponding_conference_authors.csv', header=None, delimiter=',', nrows=10000)
+        df_corresponding_conference_authors = df_corresponding_conference_authors[[
+            1]]
+        df_corresponding_conference_authors['author'] = df_corresponding_conference_authors[1]
+        df_corresponding_conference_authors = df_corresponding_conference_authors['author']
+
+        df_corresponding_journal_authors = pd.read_csv(
+            'output/corresponding_journal_authors.csv', header=None, delimiter=',', nrows=10000)
+        df_corresponding_journal_authors = df_corresponding_journal_authors[[
+            1]]
+        df_corresponding_journal_authors['author'] = df_corresponding_journal_authors[1]
+        df_corresponding_journal_authors = df_corresponding_journal_authors['author']
+
+        df_non_corresponding_conference_authors = pd.read_csv(
+            'output/non_corresponding_conference_authors.csv', header=None, delimiter=',', nrows=10000)
+        df_non_corresponding_conference_authors = df_non_corresponding_conference_authors[[
+            1]]
+        df_non_corresponding_conference_authors['author'] = df_non_corresponding_conference_authors[1]
+        df_non_corresponding_conference_authors = df_non_corresponding_conference_authors[
+            'author']
+
+        df_non_corresponding_journal_authors = pd.read_csv(
+            'output/non_corresponding_journal_authors.csv', header=None, delimiter=',', nrows=10000)
+        df_non_corresponding_journal_authors = df_non_corresponding_journal_authors[[
+            1]]
+        df_non_corresponding_journal_authors['author'] = df_non_corresponding_journal_authors[1]
+        df_non_corresponding_journal_authors = df_non_corresponding_journal_authors['author']
+
+        df = pd.concat([df_corresponding_conference_authors, df_corresponding_journal_authors,
+                        df_non_corresponding_conference_authors, df_non_corresponding_journal_authors])
+        df = df.drop_duplicates(0)
+        df = pd.DataFrame(df)
+
+        df_schools = pd.read_csv('input/output_school.csv', delimiter=';', nrows=10000,
+                                 usecols={'school:string'},
+                                 dtype={'school:string': str})
+
+        df_schools = df_schools.drop_duplicates(['school:string'])
+        self.schools = df_schools['school:string'].tolist()
+        df['school'] = df['author'].apply(
+            lambda author: random.choice(self.schools))
+
+        df.to_csv('output/author_schools.csv',
+                  sep=',', index=False, header=False)
+        print("Author's affiliations generated.")

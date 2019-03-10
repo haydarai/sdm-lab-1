@@ -216,4 +216,23 @@ class Neo4J_Loader():
                     CREATE (s:School { name: row[0] })
                     RETURN s
             """)
+            session.run('CREATE INDEX ON :School(name)')
             print('Schools loaded.')
+
+    def load_author_schools(self):
+        print('Loading author schools...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (:Author)-[aw:AFFILIATED_WITH]->(:School) DETACH DELETE aw
+            """)
+            session.run("""
+                LOAD CSV FROM 'file:///author_schools.csv' AS row
+                WITH row
+                    MATCH (a:Author), (s:School)
+                    WHERE a.name = row[0]
+                    AND s.name = row[1]
+                    WITH row, a, s
+                        CREATE (a)-[:AFFILIATED_WITH]->(s)
+                        RETURN a, s
+            """)
+            print("Author's affiliations loaded.")
