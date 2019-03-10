@@ -14,6 +14,10 @@ def generate_abstract(row):
     return lorem.paragraph()
 
 
+def generate_textual_description(row):
+    return lorem.sentence()
+
+
 def is_corresponding(author):
     last_name = author.last_name.split()
     if last_name:
@@ -388,12 +392,12 @@ class DBLP_Loader():
 
         df = df.dropna(subset=['author'])
 
-        df_authors = df[['author', 'title']]
+        df_authors = df[['author', 'key']]
         df_authors = df_authors.drop_duplicates()
 
         df_authors['author'] = df_authors['author'].str.split('|')
 
-        df_authors_all = df_authors.set_index(['title']).author.apply(
+        df_authors_all = df_authors.set_index(['key']).author.apply(
             pd.Series).stack().reset_index(name='author').drop('level_1', axis=1)
         df_authors_all['author'] = df_authors_all['author'].apply(
             remove_numbers_from_name)
@@ -402,10 +406,13 @@ class DBLP_Loader():
 
         df_authors['reviewer'] = df_authors['author'].apply(
             lambda author: self.get_random_reviewers(author, authors))
-        df_authors = df_authors.set_index(['title']).reviewer.apply(
+        df_authors = df_authors.set_index(['key']).reviewer.apply(
             pd.Series).stack().reset_index(name='reviewer').drop('level_1', axis=1)
         df_authors['reviewer'] = df_authors['reviewer'].apply(
             remove_numbers_from_name)
+
+        df_authors['textual_description'] = df_authors.apply(
+            generate_textual_description, axis=1)
 
         df_authors.to_csv('output/conference_paper_reviewers.csv',
                           sep=',', index=False, header=False)
@@ -422,12 +429,12 @@ class DBLP_Loader():
 
         df = df.dropna(subset=['author'])
 
-        df_authors = df[['author', 'title']]
+        df_authors = df[['author', 'key']]
         df_authors = df_authors.drop_duplicates()
 
         df_authors['author'] = df_authors['author'].str.split('|')
 
-        df_authors_all = df_authors.set_index(['title']).author.apply(
+        df_authors_all = df_authors.set_index(['key']).author.apply(
             pd.Series).stack().reset_index(name='author').drop('level_1', axis=1)
         df_authors_all['author'] = df_authors_all['author'].apply(
             remove_numbers_from_name)
@@ -436,10 +443,13 @@ class DBLP_Loader():
 
         df_authors['reviewer'] = df_authors['author'].apply(
             lambda author: self.get_random_reviewers(author, authors))
-        df_authors = df_authors.set_index(['title']).reviewer.apply(
+        df_authors = df_authors.set_index(['key']).reviewer.apply(
             pd.Series).stack().reset_index(name='reviewer').drop('level_1', axis=1)
         df_authors['reviewer'] = df_authors['reviewer'].apply(
             remove_numbers_from_name)
+
+        df_authors['textual_description'] = df_authors.apply(
+            generate_textual_description, axis=1)
 
         df_authors.to_csv('output/journal_paper_reviewers.csv',
                           sep=',', index=False, header=False)

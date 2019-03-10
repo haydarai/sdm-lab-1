@@ -52,6 +52,10 @@ class Neo4J_Loader():
             session.run('CREATE INDEX ON :Journal(date)')
             session.run('CREATE INDEX ON :Journal(volume)')
 
+    def add_index_to_authors(self):
+        with self.driver.session() as session:
+            session.run('CREATE INDEX ON :Author(name)')
+
     def delete_papers(self):
         with self.driver.session() as session:
             session.run("""
@@ -75,6 +79,7 @@ class Neo4J_Loader():
     def load_conference_paper_keywords(self):
         print('Loading conference paper keywords to Neo4J...')
         with self.driver.session() as session:
+            session.run("""CREATE INDEX ON :Keyword(keyword) """)
             session.run("""
                 LOAD CSV FROM 'file:///conference_paper_keywords.csv' AS row
                 WITH row
@@ -246,4 +251,32 @@ class Neo4J_Loader():
                 SET x.num_of_reviewers = 3
                 RETURN x
             """)
-        print('number of reviewers to conferences and journals have been set.')
+        print('Number of reviewers to conferences and journals have been set.')
+
+    def load_conference_paper_reviews(self):
+        print('Loading conference paper reviewers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///conference_paper_reviewers.csv' AS row
+                    MATCH (p:Paper), (a:Author)
+                    WHERE p.key = row[0]
+                    AND a.name = row[1]
+                        WITH p, a, row
+                        CREATE (p)-[:REVIEW { accept: true, textual_description: row[2] }]->(a)
+                        RETURN p, a
+            """)
+        print('Conference paper reviewers loaded.')
+
+    def load_journal_paper_reviews(self):
+        print('Loading hournal paper reviewers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///conference_paper_reviewers.csv' AS row
+                    MATCH (p:Paper), (a:Author)
+                    WHERE p.key = row[0]
+                    AND a.name = row[1]
+                        WITH p, a, row
+                        CREATE (p)-[:REVIEW { accept: true, textual_description: row[2] }]->(a)
+                        RETURN p, a
+            """)
+        print('Conference paper reviewers loaded.')
