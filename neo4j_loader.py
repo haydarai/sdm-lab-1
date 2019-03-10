@@ -236,3 +236,14 @@ class Neo4J_Loader():
                         RETURN a, s
             """)
             print("Author's affiliations loaded.")
+
+    def set_num_of_reviewers(self):
+        print('Setting number of reviewers to conferences and journals...')
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (x)
+                WHERE x:Conference OR x:Journal
+                SET x.num_of_reviewers = 3
+                RETURN x
+            """)
+        print('number of reviewers to conferences and journals have been set.')
