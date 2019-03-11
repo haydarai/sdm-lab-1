@@ -262,8 +262,8 @@ class Neo4J_Loader():
                     WHERE p.key = row[0]
                     AND a.name = row[1]
                         WITH p, a, row
-                        CREATE (p)-[:REVIEW { accept: true, textual_description: row[2] }]->(a)
-                        RETURN p, a
+                        CREATE (a)-[:REVIEW { accept: true, textual_description: row[2] }]->(p)
+                        RETURN a, p
             """)
         print('Conference paper reviewers loaded.')
 
@@ -276,7 +276,7 @@ class Neo4J_Loader():
                     WHERE p.key = row[0]
                     AND a.name = row[1]
                         WITH p, a, row
-                        CREATE (p)-[:REVIEW { accept: true, textual_description: row[2] }]->(a)
+                        CREATE (p)<-[:REVIEW { accept: true, textual_description: row[2] }]-(a)
                         RETURN p, a
             """)
         print('Conference paper reviewers loaded.')
