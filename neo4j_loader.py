@@ -268,7 +268,7 @@ class Neo4J_Loader():
         print('Conference paper reviewers loaded.')
 
     def load_journal_paper_reviews(self):
-        print('Loading hournal paper reviewers...')
+        print('Loading journal paper reviewers...')
         with self.driver.session() as session:
             session.run("""
                 LOAD CSV FROM 'file:///conference_paper_reviewers.csv' AS row
