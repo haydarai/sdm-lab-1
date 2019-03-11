@@ -67,7 +67,10 @@ class DBLP_Loader():
 
     def randomize_keyword(self, keywords):
         if not keywords:
-            return [random.choice(self.all_keywords)]
+            return random.choices(self.all_keywords, k=5)
+        elif len(keywords) < 5:
+            remaining = 5 - len(keywords)
+            return keywords + list(set(random.choices(self.all_keywords, k=remaining)) - set(keywords))
         else:
             return keywords
 
