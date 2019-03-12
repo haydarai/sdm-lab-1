@@ -21,7 +21,7 @@ class Neo4J_Loader():
                 WITH row
                     WITH toString(toInteger(row[1])) + '-01-01' AS startDate, row
                         WITH toString(toInteger(row[1])) + '-01-02' AS endDate, startDate, row
-                            CREATE (c:Conference { title: row[0], startDate: startDate, endDate: endDate })
+                            CREATE (c:Conference { title: row[0], startDate: startDate, endDate: endDate, edition: row[1] })
                             RETURN c
             """)
             print('Conferences loaded.')
