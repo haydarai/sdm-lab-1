@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import argparse
 from neo4j_loader import Neo4J_Loader
 from dblp_loader import DBLP_Loader
+from query_runner import Query_Runner
 
 load_dotenv()
 
@@ -11,6 +12,8 @@ if __name__ == "__main__":
     parser.add_argument('--parse', action='store_true')
     parser.add_argument('--load', action='store_true')
     parser.add_argument('--evolve', action='store_true')
+    parser.add_argument('--recommend')
+    parser.add_argument('--gurus', type=int)
     args = parser.parse_args()
 
     if args.parse and not args.evolve:
@@ -61,3 +64,18 @@ if __name__ == "__main__":
         database_loader.load_evolve_conference_paper_reviews()
         database_loader.load_evolve_journal_paper_reviews()
         print('All data loaded.')
+    elif args.recommend and args.gurus:
+        keywords = """['data', 'database', 'management', 'olap', 'postgres', 'xml', 'relational', 'queries', 'sql']"""
+        query_runner = Query_Runner()
+        publications = query_runner.get_publication_communities(args.recommend)
+        papers = query_runner.get_top_papers(publications)
+        gurus = query_runner.get_gurus(papers, args.gurus)
+        print('Gurus:')
+        print(gurus)
+    elif args.recommend:
+        query_runner = Query_Runner()
+        publications = query_runner.get_publication_communities(args.recommend)
+        papers = query_runner.get_top_papers(publications)
+        authors = query_runner.get_authors(papers)
+        print('Recommended reviewers:')
+        print(authors)
