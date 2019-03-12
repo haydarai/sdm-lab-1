@@ -253,7 +253,7 @@ class Neo4J_Loader():
             """)
         print('Number of reviewers to conferences and journals have been set.')
 
-    def load_conference_paper_reviews(self):
+    def load_initial_conference_paper_reviews(self):
         print('Loading conference paper reviewers...')
         with self.driver.session() as session:
             session.run("""
@@ -262,12 +262,12 @@ class Neo4J_Loader():
                     WHERE p.key = row[0]
                     AND a.name = row[1]
                         WITH p, a, row
-                        MERGE (a)-[:REVIEW { accept: true, textual_description: row[2] }]->(p)
+                        MERGE (a)-[:REVIEW]->(p)
                         RETURN a, p
             """)
         print('Conference paper reviewers loaded.')
 
-    def load_journal_paper_reviews(self):
+    def load_initial_journal_paper_reviews(self):
         print('Loading journal paper reviewers...')
         with self.driver.session() as session:
             session.run("""
@@ -276,7 +276,39 @@ class Neo4J_Loader():
                     WHERE p.key = row[0]
                     AND a.name = row[1]
                         WITH p, a, row
-                        MERGE (p)<-[:REVIEW { accept: true, textual_description: row[2] }]-(a)
+                        MERGE (p)<-[:REVIEW]-(a)
+                        RETURN p, a
+            """)
+        print('Conference paper reviewers loaded.')
+
+    def load_evolve_conference_paper_reviews(self):
+        print('Loading suggested decision and textual description to reviews...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///conference_paper_reviewers.csv' AS row
+                    MATCH (p:Paper), (a:Author)
+                    WHERE p.key = row[0]
+                    AND a.name = row[1]
+                        WITH p, a, row
+                        MATCH (a)-[r:REVIEW]->(p)
+                        SET r.accept = true
+                        SET r.textual_description = row[2]
+                        RETURN a, p
+            """)
+        print('Conference paper reviewers loaded.')
+
+    def load_evolve_journal_paper_reviews(self):
+        print('Loading journal paper reviewers...')
+        with self.driver.session() as session:
+            session.run("""
+                LOAD CSV FROM 'file:///conference_paper_reviewers.csv' AS row
+                    MATCH (p:Paper), (a:Author)
+                    WHERE p.key = row[0]
+                    AND a.name = row[1]
+                        WITH p, a, row
+                        MATCH (a)-[r:REVIEW]->(p)
+                        SET r.accept = true
+                        SET r.textual_description = row[2]
                         RETURN p, a
             """)
         print('Conference paper reviewers loaded.')
