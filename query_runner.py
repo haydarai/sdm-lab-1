@@ -30,7 +30,8 @@ class Query_Runner ():
                     "MATCH (p1:Paper)-[:CITED_BY]-(p2:Paper) WHERE (p1 IN {publications}) AND (p2 IN {publications})
                      RETURN id(p1) AS source, id(p2) AS target",
     	            {config})
-                YIELD nodeId, score WITH algo.getNodeById(nodeId) AS node, score
+                YIELD nodeId, score WITH nodeId, score
+                MATCH (x:Paper) WHERE id(x) = nodeId
                 ORDER BY score DESC LIMIT 100
                 RETURN COLLECT(node .title)
             """).single()[0]
