@@ -213,32 +213,32 @@ class Neo4J_Loader():
         print('Loading schools...')
         with self.driver.session() as session:
             session.run("""
-                MATCH (i:Institution) DETACH DELETE s
+                MATCH (o:Organization) DETACH DELETE o
             """)
             session.run("""
                 LOAD CSV FROM 'file:///schools.csv' AS row
                 WITH row
-                    CREATE (i:Institution { name: row[0] })
-                    RETURN s
+                    CREATE (o:Organization { name: row[0] })
+                    RETURN o
             """)
-            session.run('CREATE INDEX ON :Institution(name)')
+            session.run('CREATE INDEX ON :Organization(name)')
             print('Schools loaded.')
 
     def load_author_schools(self):
         print('Loading author schools...')
         with self.driver.session() as session:
             session.run("""
-                MATCH (:Author)-[aw:AFFILIATED_WITH]->(:Institution) DETACH DELETE aw
+                MATCH (:Author)-[aw:AFFILIATED_WITH]->(:Organization) DETACH DELETE aw
             """)
             session.run("""
                 LOAD CSV FROM 'file:///author_schools.csv' AS row
                 WITH row
-                    MATCH (a:Author), (i:Institution)
+                    MATCH (a:Author), (o:Organization)
                     WHERE a.name = row[0]
-                    AND s.name = row[1]
-                    WITH row, a, s
-                        CREATE (a)-[:AFFILIATED_WITH]->(s)
-                        RETURN a, s
+                    AND o.name = row[1]
+                    WITH row, a, o
+                        CREATE (a)-[:AFFILIATED_WITH]->(o)
+                        RETURN a, o
             """)
             print("Author's affiliations loaded.")
 
