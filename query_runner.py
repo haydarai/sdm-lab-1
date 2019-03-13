@@ -31,9 +31,9 @@ class Query_Runner ():
                      RETURN id(p1) AS source, id(p2) AS target",
     	            {config})
                 YIELD nodeId, score WITH nodeId, score
+                ORDER BY score DESC
                 MATCH (x:Paper) WHERE id(x) = nodeId
-                ORDER BY score DESC LIMIT 100
-                RETURN COLLECT(node .title)
+                RETURN COLLECT(x.title)
             """).single()[0]
 
     def get_authors(self, papers):
