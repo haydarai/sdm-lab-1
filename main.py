@@ -35,7 +35,6 @@ if __name__ == "__main__":
         database_loader.load_journals()
         database_loader.add_index_to_journals()
         database_loader.load_conference_venues()
-        database_loader.set_num_of_reviewers()
         database_loader.delete_papers()
         database_loader.load_conference_papers()
         database_loader.load_journal_papers()
@@ -58,6 +57,7 @@ if __name__ == "__main__":
     elif args.load and args.evolve:
         file_loader = DBLP_Loader()
         database_loader = Neo4J_Loader()
+        database_loader.set_num_of_reviewers()
         database_loader.load_schools()
         file_loader.generate_random_author_schools()
         database_loader.load_author_schools()
